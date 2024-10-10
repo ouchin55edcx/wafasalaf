@@ -9,6 +9,10 @@
 
     import java.math.BigDecimal;
     import java.time.LocalDate;
+    import java.time.LocalDateTime;
+    import java.util.Comparator;
+    import java.util.HashSet;
+    import java.util.Set;
 
     @Entity
     @Setter
@@ -104,9 +108,26 @@
         @Column(nullable = true)
         private BigDecimal other_loans_monthly_payment;
 
+        @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, orphanRemoval = true)
+        private Set<Historic> historics = new HashSet<>();
 
 
 
+        public void addHistoric(Status status, String description) {
+            Historic historic = new Historic();
+            historic.setRequest(this);
+            historic.setStatus(status);
+            historic.setDate(LocalDateTime.now());
+            historic.setDescription(description);
+            this.historics.add(historic);
+        }
+
+        public Status getCurrentStatus() {
+            return this.historics.stream()
+                    .max(Comparator.comparing(Historic::getDate))
+                    .map(Historic::getStatus)
+                    .orElse(null);
+        }
 
 
 

@@ -14,6 +14,7 @@ public interface RequestRepository {
     void delete(Long id);
     List<Request> findByStatus();
     List<Request> findByDate();
+    Request findByEmail(String email);
 
 
 }
