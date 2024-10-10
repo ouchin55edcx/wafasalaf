@@ -43,7 +43,6 @@ public class RequestServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         Request newRequest = createRequestFromParameters(request);
 
-        // Validation
         Set<ConstraintViolation<Request>> violations = validator.validate(newRequest);
         if (!violations.isEmpty()) {
             String errorMessage = violations.stream()
@@ -57,11 +56,12 @@ public class RequestServlet extends HttpServlet {
         Request savedRequest = requestService.createRequest(newRequest);
 
         if (savedRequest != null && savedRequest.getId() != null) {
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.getWriter().write("Your request was successfully submitted!");
-        } else {
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write("Failed to save the request.");
+            //response.sendRedirect(request.getContextPath() + "/dashboard");
+            //response.sendRedirect(request.getContextPath() + "/dashboard/index.jsp");
+            response.sendRedirect(request.getContextPath() + "/requestList");
+
+
+
         }
     }
 
@@ -69,7 +69,6 @@ public class RequestServlet extends HttpServlet {
         Request newRequest = new Request();
         request.getParameterMap().forEach((k, v) -> System.out.println("key => " + k + " value => " + Arrays.asList(v)));
 
-        // Parse and set request parameters
         newRequest.setProject_name(request.getParameter("project"));
         newRequest.setProfession(request.getParameter("profession"));
         newRequest.setAmount(Integer.parseInt(request.getParameter("amount")));
@@ -92,7 +91,6 @@ public class RequestServlet extends HttpServlet {
         newRequest.setMonthly_net_income(new BigDecimal(request.getParameter("totalrevenue")));
         newRequest.setHas_current_loans(request.getParameter("credits").equals("Oui"));
 
-        // Handle optional fields
         String creditImmo = request.getParameter("creditImmo");
         newRequest.setMortgage_monthly_payment(creditImmo != null && !creditImmo.isEmpty() ? new BigDecimal(creditImmo) : BigDecimal.ZERO);
 

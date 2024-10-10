@@ -48,8 +48,9 @@ public class RequestRepositoryImpl implements RequestRepository {
 
     @Override
     public List<Request> findAll() {
-        return List.of();
+        return em.createQuery("SELECT r FROM Request r", Request.class).getResultList();
     }
+
 
     @Override
     public void update(Request request) {

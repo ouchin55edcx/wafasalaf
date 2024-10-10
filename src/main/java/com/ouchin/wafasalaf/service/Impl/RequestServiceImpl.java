@@ -4,6 +4,8 @@ import com.ouchin.wafasalaf.Repository.RequestRepository;
 import com.ouchin.wafasalaf.entity.Request;
 import com.ouchin.wafasalaf.service.RequestService;
 
+import java.util.List;
+
 public class RequestServiceImpl implements RequestService {
 
 
@@ -16,6 +18,11 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public Request createRequest(Request request) {
         return requestRepository.save(request);
+    }
+
+    @Override
+    public List<Request> getAllRequests() {
+        return requestRepository.findAll();
     }
 
 }
