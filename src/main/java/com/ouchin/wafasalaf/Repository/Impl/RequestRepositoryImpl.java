@@ -2,7 +2,9 @@ package com.ouchin.wafasalaf.Repository.Impl;
 
 import com.ouchin.wafasalaf.Repository.RequestRepository;
 import com.ouchin.wafasalaf.config.EntityManagerFactorySingleton;
+import com.ouchin.wafasalaf.entity.Historic;
 import com.ouchin.wafasalaf.entity.Request;
+import com.ouchin.wafasalaf.entity.Status;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
@@ -81,5 +83,32 @@ public class RequestRepositoryImpl implements RequestRepository {
         } catch (NoResultException e) {
             return null;
         }
+    }
+
+
+    @Override
+    public void updateStatus(Long requestId, Status newStatus, String description) {
+        EntityTransaction transaction = em.getTransaction();
+        try {
+            transaction.begin();
+            Request request = em.find(Request.class, requestId);
+            if (request != null) {
+                request.addHistoric(newStatus, description);
+                em.merge(request);
+            }
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction.isActive()) {
+                transaction.rollback();
+            }
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public List<Historic> getHistoricForRequest(Long requestId) {
+        return em.createQuery("SELECT h FROM Historic h WHERE h.request.id = :requestId ORDER BY h.date DESC", Historic.class)
+                .setParameter("requestId", requestId)
+                .getResultList();
     }
 }
