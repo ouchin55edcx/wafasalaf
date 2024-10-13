@@ -10,17 +10,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Request Historic</title>
     <style>
+        :root {
+            --yellow: #FFD700;
+            --white: #FFFFFF;
+            --gray: #F0F0F0;
+            --blue: #007BFF;
+            --black: #333333;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--white);
+            color: var(--black);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1, h2 {
+            color: var(--blue);
+        }
+
+        h1 {
+            border-bottom: 2px solid var(--yellow);
+            padding-bottom: 10px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 20px;
+            margin-bottom: 20px;
         }
+
         th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
+            border: 1px solid var(--gray);
+            padding: 12px;
             text-align: left;
         }
+
         th {
-            background-color: #f2f2f2;
+            background-color: var(--yellow);
+            color: var(--black);
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--gray);
+        }
+
+        .request-details {
+            background-color: var(--gray);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .request-details p {
+            margin: 5px 0;
+        }
+
+        a {
+            display: inline-block;
+            background-color: var(--blue);
+            color: var(--white);
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 3px;
+            transition: background-color 0.3s ease;
+        }
+
+        a:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
@@ -32,11 +93,13 @@
     if (req != null) {
 %>
 <h2>Request Details</h2>
-<p>ID: <%= req.getId() %></p>
-<p>Project Name: <%= req.getProject_name() %></p>
-<p>Amount: <%= req.getAmount() %></p>
-<p>Email: <%= req.getEmail() %></p>
-<p>Phone Number: <%= req.getPhone_number() %></p>
+<div class="request-details">
+    <p><strong>ID:</strong> <%= req.getId() %></p>
+    <p><strong>Project Name:</strong> <%= req.getProject_name() %></p>
+    <p><strong>Amount:</strong> <%= req.getAmount() %></p>
+    <p><strong>Email:</strong> <%= req.getEmail() %></p>
+    <p><strong>Phone Number:</strong> <%= req.getPhone_number() %></p>
+</div>
 <% } %>
 
 <h2>Status History</h2>

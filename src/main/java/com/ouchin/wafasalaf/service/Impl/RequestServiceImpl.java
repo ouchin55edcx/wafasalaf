@@ -6,6 +6,7 @@ import com.ouchin.wafasalaf.entity.Request;
 import com.ouchin.wafasalaf.entity.Status;
 import com.ouchin.wafasalaf.service.RequestService;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public class RequestServiceImpl implements RequestService {
@@ -37,7 +38,18 @@ public class RequestServiceImpl implements RequestService {
         return requestRepository.getHistoricForRequest(requestId);
     }
 
-
+    @Override
+    public List<Request> getFilteredRequests(Long statusId, LocalDate startDate, LocalDate endDate) {
+        if (statusId != null && startDate != null && endDate != null) {
+            return requestRepository.findByStatusAndDate(statusId, startDate, endDate);
+        } else if (statusId != null) {
+            return requestRepository.findByStatus(statusId);
+        } else if (startDate != null && endDate != null) {
+            return requestRepository.findByDateRange(startDate, endDate);
+        } else {
+            return requestRepository.findAll();
+        }
+    }
 
 
 }

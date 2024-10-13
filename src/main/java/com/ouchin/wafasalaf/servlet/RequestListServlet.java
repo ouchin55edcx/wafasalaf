@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 
 @WebServlet("/requestList")
@@ -35,10 +36,33 @@ public class RequestListServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        List<Request> requests = requestService.getAllRequests();
+        String statusId = request.getParameter("statusId");
+        String startDateStr = request.getParameter("startDate");
+        String endDateStr = request.getParameter("endDate");
+
+        Long statusIdLong = null;
+        LocalDate startDate = null;
+        LocalDate endDate = null;
+
+        if (statusId != null && !statusId.isEmpty()) {
+            statusIdLong = Long.parseLong(statusId);
+        }
+        if (startDateStr != null && !startDateStr.isEmpty()) {
+            startDate = LocalDate.parse(startDateStr);
+        }
+        if (endDateStr != null && !endDateStr.isEmpty()) {
+            endDate = LocalDate.parse(endDateStr);
+        }
+
+        List<Request> requests = requestService.getFilteredRequests(statusIdLong, startDate, endDate);
         List<Status> allStatuses = statusService.getAllStatuses();
+
         request.setAttribute("requests", requests);
         request.setAttribute("allStatuses", allStatuses);
+        request.setAttribute("selectedStatusId", statusIdLong);
+        request.setAttribute("startDate", startDateStr);
+        request.setAttribute("endDate", endDateStr);
+
         request.getRequestDispatcher("/dashboard/index.jsp").forward(request, response);
     }
 }

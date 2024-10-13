@@ -1,246 +1,133 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // Form elements
-    const multiStepForm = document.getElementById('multi-step-form');
-    const step1 = document.getElementById('step-1');
-    const step2 = document.getElementById('step-2');
-    const step3 = document.getElementById('step-3');
-    const nextButtons = document.querySelectorAll('.btn-next');
-    const finalSubmitButton = document.getElementById('final-submit-button');
+document.addEventListener("DOMContentLoaded", () => {
+    const steps = document.querySelectorAll(".step");
+    const formSections = document.querySelectorAll("section.loan-form");
+    const continueButtons = document.querySelectorAll(".btn-submit");
+    const recapContent = document.getElementById("recap-content");
+    const stepIndicators = document.querySelectorAll(".steps .step");
+    let currentStep = 0;
 
-    // Input elements
-    const amountInput = document.getElementById('amount');
-    const durationInput = document.getElementById('duration');
-    const monthlyInput = document.getElementById('monthly');
-    const projectSelect = document.getElementById('project');
-    const professionSelect = document.getElementById('profession');
+    // Form data object to capture filled values
+    const formData = {};
 
-    // Range elements
-    const amountRange = document.getElementById('amount-range');
-    const durationRange = document.getElementById('duration-range');
-    const monthlyRange = document.getElementById('monthly-range');
-
-    // Recap elements
-    const recapSection = document.querySelector('.recap-content');
-    const recapContainer = document.querySelector('.recap');
-
-    // Step indicators
-    const step1Indicator = document.getElementById('step-1-indicator');
-    const step2Indicator = document.getElementById('step-2-indicator');
-    const step3Indicator = document.getElementById('step-3-indicator');
-
-    // Constants
-    const interestRate = 0.05;
-
-    // Helper functions
-    function calculateMonthly(amount, duration) {
-        if (!amount || !duration) return 0;
-        const monthlyRate = interestRate / 12;
-        const monthly = (amount * monthlyRate * Math.pow(1 + monthlyRate, duration)) / (Math.pow(1 + monthlyRate, duration) - 1);
-        return isNaN(monthly) || monthly <= 0 ? 0 : monthly.toFixed(2);
-    }
-
-    function updateMonthlyLabel(value) {
-        const monthlyLabel = document.querySelector('.monthly-label');
-        if (!monthlyLabel) return;
-
-        monthlyLabel.textContent = `${value} DH`;
-        const rangeWidth = monthlyRange.offsetWidth;
-        const thumbPosition = (monthlyRange.value - monthlyRange.min) / (monthlyRange.max - monthlyRange.min) * rangeWidth;
-        monthlyLabel.style.left = `${thumbPosition}px`;
-    }
-
-    function syncInputs(input, range, callback) {
-        input.addEventListener('input', () => {
-            range.value = input.value;
-            callback();
+    // Function to update the recap section
+    const updateRecap = () => {
+        recapContent.innerHTML = '';  // Clear existing content
+        Object.keys(formData).forEach((key) => {
+            const fieldElement = document.createElement('p');
+            fieldElement.classList.add("recap-personel");
+            fieldElement.innerHTML = `<strong>${key}</strong>: ${formData[key]}`;
+            recapContent.appendChild(fieldElement);
         });
-        range.addEventListener('input', () => {
-            input.value = range.value;
-            callback();
+    };
+
+    // Function to navigate to a particular section
+    const showSection = (index) => {
+        formSections.forEach((section, i) => {
+            section.style.display = i === index ? "block" : "none";
         });
-    }
-
-    function updateDurationBasedOnMonthly() {
-        const amount = parseFloat(amountInput.value);
-        const monthly = parseFloat(monthlyInput.value);
-        const monthlyRate = interestRate / 12;
-
-        if (monthly <= 0 || amount <= 0) {
-            durationInput.value = 0;
-            durationRange.value = 0;
-            return;
-        }
-
-        const duration = Math.log(monthly / (monthly - amount * monthlyRate)) / Math.log(1 + monthlyRate);
-        durationInput.value = Math.round(duration);
-        durationRange.value = durationInput.value;
-    }
-
-    function updateMonthlyWhenAmountOrDurationChanges() {
-        const amount = parseFloat(amountInput.value);
-        const duration = parseFloat(durationInput.value);
-        const monthlyValue = calculateMonthly(amount, duration);
-
-        if (monthlyValue) {
-            monthlyInput.value = monthlyValue;
-            monthlyRange.value = monthlyValue;
-            updateMonthlyLabel(monthlyValue);
-        }
-    }
-
-    // Step navigation functions
-    function showStep(stepNumber) {
-        [step1, step2, step3].forEach((step, index) => {
-            step.style.display = index + 1 === stepNumber ? 'block' : 'none';
+        steps.forEach((step, i) => {
+            step.classList.toggle("active", i === index);
         });
-        [step1Indicator, step2Indicator, step3Indicator].forEach((indicator, index) => {
-            if (index + 1 < stepNumber) {
-                indicator.style.backgroundColor = '#02AFBC';
-                indicator.classList.remove('active');
-            } else if (index + 1 === stepNumber) {
-                indicator.classList.add('active');
-            } else {
-                indicator.classList.remove('active');
-            }
+        currentStep = index;
+    };
+
+    // Check if all required fields in a section are filled
+    const isSectionValid = (sectionIndex) => {
+        const inputs = formSections[sectionIndex].querySelectorAll("input, select, textarea");
+        return Array.from(inputs).every(input => input.checkValidity());
+    };
+
+    // Enable navigation between sections if all sections are filled
+    const toggleStepNavigation = () => {
+        stepIndicators.forEach((step, index) => {
+            step.classList.toggle("navigable", isSectionValid(index));
         });
-    }
+    };
 
-    function validateStep(stepNumber) {
-        // Add validation logic for each step
-        // Return true if validation passes, false otherwise
-        switch (stepNumber) {
-            case 1:
-                return amountInput.value && durationInput.value && monthlyInput.value;
-            case 2:
-                return document.getElementById('email').value && document.getElementById('phone').value;
-            case 3:
-                return document.querySelector('input[name="civilite"]:checked') &&
-                    document.getElementById('nom').value &&
-                    document.getElementById('prenom').value &&
-                    document.getElementById('mustbechecked').checked;
-            default:
-                return true;
-        }
-    }
-
-    function updateRecap(completedStep) {
-        let recapContent = '';
-
-        if (completedStep >= 1) {
-            const selectedProject = projectSelect.options[projectSelect.selectedIndex].text;
-            const selectedProfession = professionSelect.options[professionSelect.selectedIndex].text;
-            recapContent += `
-                <h4 class="recap-first p">Mon Projet</h4>
-                <p class="recap-project p">${selectedProject}</p><br><br>
-                <h4 class="recap-title p">Détail de mon crédit</h4>
-                <p class="recap-profession p s"><strong>Vous êtes:</strong> <span class="recap-value">${selectedProfession}</span></p>
-                <hr>
-                <p class="recap-amount p s"><strong>Montant:</strong> <span class="recap-value">${amountInput.value} DH</span></p>
-                <hr>
-                <p class="recap-duration p s"><strong>Durée:</strong> <span class="recap-value">${durationInput.value} mois</span></p>
-                <hr>
-                <p class="recap-monthly p s"><strong>Mensualités:</strong> <span class="recap-value">${monthlyInput.value} DH</span></p>
-            `;
-        }
-
-        if (completedStep >= 2) {
-            const emailValue = document.getElementById('email').value;
-            const phoneValue = document.getElementById('phone').value;
-            recapContent += `
-                <h4 class="recap-perso p">Coordonnées et infos personnelles</h4>
-                <p class="recap-email p s"><strong>Email:</strong> <span class="recap-value">${emailValue}</span></p>
-                <p class="recap-phone p s"><strong>Téléphone:</strong> <span class="recap-value">${phoneValue}</span></p>
-            `;
-        }
-
-        recapSection.innerHTML = recapContent;
-        recapContainer.style.display = 'block';
-    }
-
-    // Event listeners
-    syncInputs(amountInput, amountRange, updateMonthlyWhenAmountOrDurationChanges);
-    syncInputs(durationInput, durationRange, updateMonthlyWhenAmountOrDurationChanges);
-    syncInputs(monthlyInput, monthlyRange, () => {
-        monthlyInput.value = monthlyRange.value;
-        updateDurationBasedOnMonthly();
-    });
-
-    nextButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            const currentStep = parseInt(e.target.dataset.step);
-            if (validateStep(currentStep)) {
-                const nextStep = currentStep + 1;
-                showStep(nextStep);
-                updateRecap(currentStep);
-            } else {
-                showFlashMessage('Veuillez remplir tous les champs obligatoires.', 'error');
+    // Real-time form data collection
+    const inputs = document.querySelectorAll("input, select, textarea");
+    inputs.forEach((input) => {
+        input.addEventListener("input", () => {
+            const name = input.name;
+            if (name) {
+                formData[name] = input.value;
+                updateRecap();
+                toggleStepNavigation();
             }
         });
     });
 
-    multiStepForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-        if (validateStep(3)) {
-            // Perform final form submission
-            showFlashMessage('Formulaire soumis avec succès!', 'success');
-            // You can add an AJAX call here to submit the form data
+    // Initial display
+    showSection(currentStep);
+
+    // Continue button event listener for moving to the next section
+    continueButtons.forEach((button, index) => {
+        button.addEventListener("click", () => {
+            if (isSectionValid(currentStep)) {
+                if (currentStep < formSections.length - 1) {
+                    showSection(currentStep + 1);
+                }
+            } else {
+                alert("Please fill all the fields in this section before continuing.");
+            }
+        });
+    });
+
+    // Step navigation by clicking on step titles
+    stepIndicators.forEach((step, index) => {
+        step.addEventListener("click", () => {
+            if (isSectionValid(index)) {
+                showSection(index);
+            }
+        });
+    });
+
+    // Form submit handler to display data
+    /*
+    document.getElementById("creditForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (isSectionValid(formSections.length - 1)) {
+            alert(`Form Submitted Successfully!\nForm Data: ${JSON.stringify(formData, null, 2)}`);
         } else {
-            showFlashMessage('Veuillez remplir tous les champs obligatoires.', 'error');
+            alert("Please fill all the fields in the last section before submitting.");
         }
     });
+    */
 
-    const creditRadioGroup = document.querySelectorAll('input[name="credits"]');
-    const additionalInputsContainer = document.getElementById('additional-inputs');
-    const additionalInput1 = document.getElementById('additional-input1');
-    const additionalInput2 = document.getElementById('additional-input2');
+    // Range input handlers for syncing with number inputs
+    const amountInput = document.getElementById("montant");
+    const amountRange = document.getElementById("amount-range");
+    const durationInput = document.getElementById("duree");
+    const durationRange = document.getElementById("duration-range");
+    const mensualitesInput = document.getElementById("mensualites");
+    const mensualitesRange = document.getElementById("monthly-range");
 
-    creditRadioGroup.forEach(radio => {
-        radio.addEventListener('change', () => {
-            if (radio.value === 'Oui') {
-                additionalInputsContainer.style.display = 'block';
-                additionalInput1.required = true;
-                additionalInput2.required = true;
-            } else {
-                additionalInputsContainer.style.display = 'none';
-                additionalInput1.value = '';
-                additionalInput2.value = '';
-                additionalInput1.required = false;
-                additionalInput2.required = false;
-            }
+    const syncInputs = (inputElement, rangeElement) => {
+        inputElement.addEventListener("input", () => {
+            rangeElement.value = inputElement.value;
+            formData[inputElement.name] = inputElement.value;
+            updateRecap();
         });
+        rangeElement.addEventListener("input", () => {
+            inputElement.value = rangeElement.value;
+            formData[inputElement.name] = rangeElement.value;
+            updateRecap();
+        });
+    };
+
+    syncInputs(amountInput, amountRange);
+    syncInputs(durationInput, durationRange);
+    syncInputs(mensualitesInput, mensualitesRange);
+
+    // Show/Hide additional fields based on radio selection
+    const creditRadioGroup = document.getElementById("credit-radio-group");
+    const additionalInputsContainer = document.getElementById("additional-inputs");
+
+    creditRadioGroup.addEventListener("change", (event) => {
+        if (event.target.value === "Oui") {
+            additionalInputsContainer.style.display = "block";
+        } else {
+            additionalInputsContainer.style.display = "none";
+        }
     });
-
-    function showFlashMessage(message, type) {
-        const flashMessageContainer = document.createElement('div');
-        flashMessageContainer.textContent = message;
-        flashMessageContainer.className = `flash-message ${type}`;
-
-        flashMessageContainer.style.position = 'fixed';
-        flashMessageContainer.style.top = '20px';
-        flashMessageContainer.style.right = '20px';
-        flashMessageContainer.style.zIndex = '1000';
-        flashMessageContainer.style.padding = '10px';
-        flashMessageContainer.style.color = 'white';
-        flashMessageContainer.style.backgroundColor = type === 'error' ? 'red' : 'green';
-        flashMessageContainer.style.borderRadius = '5px';
-        flashMessageContainer.style.opacity = '0.9';
-
-        document.body.appendChild(flashMessageContainer);
-
-        // Remove flash message after 5 seconds
-        setTimeout(() => {
-            document.body.removeChild(flashMessageContainer);
-        }, 5000);
-    }
-
-    // Check for flash message on page load
-    const flashMessage = sessionStorage.getItem('flashMessage');
-    if (flashMessage) {
-        showFlashMessage(flashMessage, 'success');
-        sessionStorage.removeItem('flashMessage');
-    }
-
-    // Initialize the form
-    updateMonthlyWhenAmountOrDurationChanges();
-    showStep(1);
 });

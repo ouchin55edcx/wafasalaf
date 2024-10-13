@@ -10,6 +10,7 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.NoResultException;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,26 +65,6 @@ public class RequestRepositoryImpl implements RequestRepository {
 
     }
 
-    @Override
-    public List<Request> findByStatus() {
-        return List.of();
-    }
-
-    @Override
-    public List<Request> findByDate() {
-        return List.of();
-    }
-
-    @Override
-    public Request findByEmail(String email) {
-        try {
-            return em.createQuery("SELECT r FROM Request r WHERE r.email = :email", Request.class)
-                    .setParameter("email", email)
-                    .getSingleResult();
-        } catch (NoResultException e) {
-            return null;
-        }
-    }
 
 
     @Override
@@ -111,4 +92,33 @@ public class RequestRepositoryImpl implements RequestRepository {
                 .setParameter("requestId", requestId)
                 .getResultList();
     }
+
+    @Override
+    public List<Request> findByStatusAndDate(Long statusId, LocalDate startDate, LocalDate endDate) {
+        String jpql = "SELECT DISTINCT r FROM Request r JOIN r.historics h WHERE h.status.id = :statusId AND h.date BETWEEN :startDate AND :endDate ORDER BY r.id";
+        return em.createQuery(jpql, Request.class)
+                .setParameter("statusId", statusId)
+                .setParameter("startDate", startDate.atStartOfDay())
+                .setParameter("endDate", endDate.atTime(23, 59, 59))
+                .getResultList();
+    }
+
+    @Override
+    public List<Request> findByStatus(Long statusId) {
+        String jpql = "SELECT DISTINCT r FROM Request r JOIN r.historics h WHERE h.status.id = :statusId ORDER BY r.id";
+        return em.createQuery(jpql, Request.class)
+                .setParameter("statusId", statusId)
+                .getResultList();
+    }
+
+    @Override
+    public List<Request> findByDateRange(LocalDate startDate, LocalDate endDate) {
+        String jpql = "SELECT DISTINCT r FROM Request r JOIN r.historics h WHERE h.date BETWEEN :startDate AND :endDate ORDER BY r.id";
+        return em.createQuery(jpql, Request.class)
+                .setParameter("startDate", startDate.atStartOfDay())
+                .setParameter("endDate", endDate.atTime(23, 59, 59))
+                .getResultList();
+    }
+
+
 }
